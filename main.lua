@@ -17,7 +17,7 @@ background.x = _W/2; background.y = 160;
 
 --Adicionando plataforma
 local plataforma = display.newImage("block.png", true)
-plataforma.x = 200; plataforma.y = 200;
+plataforma.x = 200; plataforma.y = 300;
 physics.addBody( plataforma, "static", { friction=0.5, bounce=0 } )
 
 
@@ -25,7 +25,7 @@ physics.addBody( plataforma, "static", { friction=0.5, bounce=0 } )
 local chao = display.newImage( "chao.png", true )
 chao.x = _W/2; chao.y = _H-35;
 --grass_bottom:setReferencePoint(display.BottomLeftReferencePoint);
-physics.addBody( chao, "static", { friction=0.5, bounce=0 } )
+physics.addBody( chao, "static", { friction=0.3, bounce=0 } )
 
 
 --Adicionando o topo da grama
@@ -35,8 +35,18 @@ gramatopo.x = _W/2; gramatopo.y = _H-95;
 
 --Adicionando o personagem
 drop = display.newImage("drop.png")
-physics.addBody(drop, "dynamic", {friction=0.4, bounce=1})
+physics.addBody(drop, "dynamic", { density=1.0, friction=0.3, bounce=0.3 })
 drop.x = math.random(10,_W-10)
+drop.isFixedRotation = true
+
+local function jump( event )
+	if(event.numTaps == 1) then
+
+		drop:applyForce(-350, -1000, drop.x, drop.y)
+	end
+end 
+
+drop:addEventListener("tap", jump)
 
 
 --Adicionando botão esquerdo
@@ -57,11 +67,14 @@ local rightWall = display.newRect(display.contentWidth,0,1, display.contentHeigh
 physics.addBody(lefWall, "static", {bounce = 0.1 })
 physics.addBody(rightWall, "static", {bounce = 0.1 })
 
+
+
+
 -- Mover o Personagem
-local function movedrop (event)
-	drop.x = drop.x + motionx;
-end
-Runtime:addEventListener("enterFrame", movedrop)
+--local function movedrop (event)
+--	drop.x = drop.x + motionx;
+--end
+--Runtime:addEventListener("enterFrame", movedrop)
 
 -- Função de toque no botão esquerdo
 function left:touch()
