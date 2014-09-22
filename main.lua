@@ -67,14 +67,26 @@ local rightWall = display.newRect(display.contentWidth,0,1, display.contentHeigh
 physics.addBody(lefWall, "static", {bounce = 0.1 })
 physics.addBody(rightWall, "static", {bounce = 0.1 })
 
+function playerJump( event )
+		if event.phase == "ended" then
+			if doubleJump == false then 
+				drop:setLinearVelocity( 0, 0 )
+				drop:applyForce(0,-11, drop.x, drop.y)
+				drop:setSequence("jump")
+			end
+
+			if singleJump == false then singleJump = true 
+			else doubleJump = true end
+		end
+		return true
+	end
 
 
-
--- Mover o Personagem
---local function movedrop (event)
---	drop.x = drop.x + motionx;
---end
---Runtime:addEventListener("enterFrame", movedrop)
+--Mover o Personagem
+local function movedrop (event)
+	drop.x = drop.x + motionx;
+end
+Runtime:addEventListener("enterFrame", movedrop)
 
 -- Função de toque no botão esquerdo
 function left:touch()
