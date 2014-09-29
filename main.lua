@@ -1,101 +1,135 @@
 display.setStatusBar(display.HiddenStatusBar)
 
-local background = display.newImage ("background.png")
-
 local physics = require("physics")
 physics.start()
 
 _W = display.contentWidth;
 _H = display.contentHeight;
-motionx = 0;
-speed = 3;
+motionx = 0
+speed = 3
 
-
+local pulo = audio.loadSound ("/sons/Jump.mp3")
 --Adicionando fundo de tela
-local background = display.newImage( "background.png", true )
+local background = display.newImage( "/imagens/bg1.jpg", true )
 background.x = _W/2; background.y = 160;
 
---Adicionando plataforma
-local plataforma = display.newImage("block.png", true)
-plataforma.x = 200; plataforma.y = 300;
-physics.addBody( plataforma, "static", { friction=0.5, bounce=0 } )
+local medidasFolha = {width = 79.2, height = 98, numFrames = 10}
 
+local folha = graphics.newImageSheet ("/imagens/sheetdrop.png", medidasFolha)
 
---Adicionando o chão
-local chao = display.newImage( "chao.png", true )
-chao.x = _W/2; chao.y = _H-35;
---grass_bottom:setReferencePoint(display.BottomLeftReferencePoint);
-physics.addBody( chao, "static", { friction=0.3, bounce=0 } )
+local sequenciaSprites = 
+{
+	{name = "paradoDireita", start = 8, count = 1, time = 0, loopCount = 1},
+	{name = "paradoEsquerda", start = 3, count = 1, time = 0, loopCount =1},
+	{name = "puloDireita", start = 10, count = -4, time = 300, loopCount = 0},
+	{name = "puloEsquerda", start = 1, count = 4, time = 500, loopCount = 0},
+		
+}
 
-
---Adicionando o topo da grama
-local gramatopo = display.newImage( "gramatopo.png", true)
-gramatopo.x = _W/2; gramatopo.y = _H-95;
-
-
---Adicionando o personagem
-drop = display.newImage("drop.png")
-physics.addBody(drop, "dynamic", { density=1.0, friction=0.3, bounce=0.3 })
-drop.x = math.random(10,_W-10)
+local drop = display.newSprite (folha, sequenciaSprites)
+drop.y = _H/2
+drop.x = _W/2
+physics.addBody(drop, "dynamic", { density=0.6, friction=0, bounce=0.3 })
+drop:setSequence ("paradoDireita")
+drop.name = "drop"
 drop.isFixedRotation = true
 
-local function jump( event )
-	if(event.numTaps == 1) then
 
-		drop:applyForce(-350, -1000, drop.x, drop.y)
-	end
-end 
+--Adicionando plataforma
+local plataforma = display.newImage("/imagens/platformMed.png", true)
+plataforma.x = 400; plataforma.y = 200;
+physics.addBody( plataforma, "static", { friction=0.5, bounce=0 } )
+plataforma.name = "plataforma"
 
-drop:addEventListener("tap", jump)
-
+--Adicionando o chão
+local chao = display.newImage( "/imagens/grass.png", true )
+chao.x = _W/2; chao.y = _H-20;
+--grass_bottom:setReferencePoint(display.BottomLeftReferencePoint);
+physics.addBody( chao, "static", { friction=0.3, bounce=0 } )
+chao.name = "chao"
+-- Adicionando o personagem
+-- drop = display.newImage("/imagens/drop.png")
+-- physics.addBody(drop, "dynamic", { density=1.0, friction=0.3, bounce=0.3 })
+-- drop.x = _W/2
+-- drop.isFixedRotation = true
+-- drop.name = "drop"
 
 --Adicionando botão esquerdo
-local left = display.newImage ("botao.png")
-left.x = 45; left.y = 430;
+local left = display.newImage ("/imagens/botao.png")
+left.x = 47; left.y = 300;
 left.rotation = 180;
 
 
 --Adicionando botão direito
-local right = display.newImage ("botao.png")
-right.x = 265; right.y = 433;
+local right = display.newImage ("/imagens/botao.png")
+right.x = 433; right.y = 300;
 
 
 --Adicionando paredes
-local lefWall = display.newRect( 0, 0, 1, display.contentHeight)
-local rightWall = display.newRect(display.contentWidth,0,1, display.contentHeight)
+local lefWall = display.newRect( 0, display.contentHeight/2, 1, display.contentHeight)
+local rightWall = display.newRect(display.contentWidth, display.contentHeight/2, 1, display.contentHeight)
 
 physics.addBody(lefWall, "static", {bounce = 0.1 })
 physics.addBody(rightWall, "static", {bounce = 0.1 })
 
-function playerJump( event )
-		if event.phase == "ended" then
-			if doubleJump == false then 
-				drop:setLinearVelocity( 0, 0 )
-				drop:applyForce(0,-11, drop.x, drop.y)
-				drop:setSequence("jump")
-			end
+--Função de pulo.
+function playerJump()
+		drop:setLinearVelocity( 0, 0 )
+		drop:applyLinearImpulse(0,200, drop.x, drop.y)
+		--drop:setSequence("puloEsquerda")
+end		
 
-			if singleJump == false then singleJump = true 
-			else doubleJump = true end
-		end
-		return true
-	end
+--Chama infinitamente a função de pulo.
+local tm = timer.performWithDelay (3000, playerJump, 0)	
+
+--Para o movimento apos soltar as setas.
+local function stop (event)
+	if event.phase =="ended" then
+		motionx = 0;
+	end		
+end
 
 
 --Mover o Personagem
 local function movedrop (event)
 	drop.x = drop.x + motionx;
 end
-Runtime:addEventListener("enterFrame", movedrop)
+
+
+
+--Função para remover o chão após tocar em uma das setas.
+function removeChao()
+	function apagar()
+		display.remove (chao)
+	end
+	transition.to(chao, {x = chao.x, y = display.contentHeight+25, time = 3000, onComplete = apagar})
+end
 
 -- Função de toque no botão esquerdo
 function left:touch()
+	removeChao ()
+	drop:play()
+	drop:setSequence ("paradoEsquerda")
 	motionx = -speed;
 end
-left:addEventListener("touch",left)
+
 
 --Função de toque no botão
 function right:touch()
+	removeChao ()
+	drop:setSequence ("paradoDireita")
 	motionx = speed;
 end
+
+local function onCollision(event)
+	if ((event.object1.name == "drop" and event.object2.name == "plataforma") or (event.object1.name == "drop" and event.object2.name == "chao")) then
+		audio.play (pulo)
+	end	
+end
+
+--Cria os Listeners.
+Runtime:addEventListener ("collision", onCollision)
+Runtime:addEventListener("touch", stop )
+Runtime:addEventListener("enterFrame", movedrop)
+left:addEventListener("touch",left)
 right:addEventListener("touch",right)
